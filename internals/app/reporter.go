@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"time"
 
 	"github.com/maitesin/numbers/internals/domain"
 )
@@ -64,4 +65,15 @@ func (r *Reporter) Report() error {
 	r.uniqueCounter = 0
 	r.duplicateCounter = 0
 	return nil
+}
+
+func CallReportAtEveryTick(reporter *Reporter, ticker *time.Ticker, stop <-chan struct{}) {
+	for {
+		select {
+		case <-stop:
+			return
+		case <-ticker.C:
+			_ = reporter.Report()
+		}
+	}
 }

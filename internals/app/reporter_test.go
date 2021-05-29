@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/maitesin/numbers/internals/app"
 	"github.com/maitesin/numbers/internals/domain"
@@ -133,4 +134,20 @@ func TestReporter_Report(t *testing.T) {
 			err := r.Report()
 			require.ErrorIs(t, err, errFromFailingWriter)
 		})
+}
+
+func TestCallReportAtEveryTick(t *testing.T) {
+	t.Parallel()
+
+	statsWriter := &bytes.Buffer{}
+	r := app.NewReporter(&bytes.Buffer{}, statsWriter)
+
+	stopChannel := make(chan struct{})
+
+	go app.CallReportAtEveryTick(r, time.NewTicker(1*time.Millisecond), stopChannel)
+
+	time.Sleep(2 * time.Millisecond)
+	stopChannel <- struct{}{}
+
+	require.NotEmpty(t, statsWriter.String())
 }
