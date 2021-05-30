@@ -10,3 +10,6 @@ test: generate
 
 lint: generate
 	golangci-lint run
+
+run:
+	cd cmd/numbers && go run main.go
