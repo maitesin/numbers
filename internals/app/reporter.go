@@ -1,7 +1,6 @@
 package app
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"sync"
@@ -68,10 +67,10 @@ func (r *Reporter) Report() error {
 	return nil
 }
 
-func CallReportAtEveryTick(ctx context.Context, reporter *Reporter, ticker *time.Ticker) {
+func CallReportAtEveryTick(reporter *Reporter, ticker *time.Ticker, finish <-chan struct{}) {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-finish:
 			return
 		case <-ticker.C:
 			_ = reporter.Report()
