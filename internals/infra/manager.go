@@ -39,15 +39,20 @@ func (cm *ClientManager) Start(ctx context.Context, cancel context.CancelFunc, r
 	}()
 
 	for {
-		conn, err := cm.accepter.Accept()
-		if err != nil {
+		select {
+		case <-ctx.Done():
 			return
-		}
+		default:
+			conn, err := cm.accepter.Accept()
+			if err != nil {
+				return
+			}
 
-		go app.ClientHandler(ctx, cancel, conn, reporter, done)
-		err = cm.sem.Acquire(ctx, 1)
-		if err != nil {
-			return
+			go app.ClientHandler(ctx, cancel, conn, reporter, done)
+			err = cm.sem.Acquire(ctx, 1)
+			if err != nil {
+				return
+			}
 		}
 	}
 }
