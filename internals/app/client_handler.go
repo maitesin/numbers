@@ -10,12 +10,13 @@ import (
 
 const stopServerCmd = "terminate"
 
-func ClientHandler(ctx context.Context, cancelCtx context.CancelFunc, reader io.Reader, reporter *Reporter, done chan<- struct{}) {
+func ClientHandler(ctx context.Context, cancelCtx context.CancelFunc, readCloser io.ReadCloser, reporter *Reporter, done chan<- struct{}) {
 	defer func() {
 		done <- struct{}{}
+		readCloser.Close()
 	}()
 
-	bufferedReader := bufio.NewReader(reader)
+	bufferedReader := bufio.NewReader(readCloser)
 	line, err := bufferedReader.ReadString('\n')
 	if err != nil {
 		return

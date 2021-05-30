@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"io/ioutil"
 	"strings"
 	"testing"
 
@@ -39,7 +40,7 @@ func TestClientHandler(t *testing.T) {
 	tests := []struct {
 		name           string
 		ctxGenerator   ctxGenerator
-		reader         io.Reader
+		reader         io.ReadCloser
 		reporter       *app.Reporter
 		expectedCtxErr error
 	}{
@@ -48,7 +49,7 @@ func TestClientHandler(t *testing.T) {
                    when the client handler is executed,
                    then the context cancel function is called`,
 			ctxGenerator:   validCtxGenerator,
-			reader:         strings.NewReader("terminate\n"),
+			reader:         ioutil.NopCloser(strings.NewReader("terminate\n")),
 			reporter:       app.NewReporter(&bytes.Buffer{}, &bytes.Buffer{}),
 			expectedCtxErr: context.Canceled,
 		},
@@ -57,7 +58,7 @@ func TestClientHandler(t *testing.T) {
                    when the client handler is executed,
                    then nothing is reported to the reporter`,
 			ctxGenerator: validCtxGenerator,
-			reader:       strings.NewReader(""),
+			reader:       ioutil.NopCloser(strings.NewReader("")),
 			reporter:     app.NewReporter(&bytes.Buffer{}, &bytes.Buffer{}),
 		},
 		{
@@ -65,7 +66,7 @@ func TestClientHandler(t *testing.T) {
                    when the client handler is executed,
                    then nothing is reported to the reporter`,
 			ctxGenerator: validCtxGenerator,
-			reader:       strings.NewReader("wololo\n"),
+			reader:       ioutil.NopCloser(strings.NewReader("wololo\n")),
 			reporter:     app.NewReporter(&bytes.Buffer{}, &bytes.Buffer{}),
 		},
 		{
@@ -73,7 +74,7 @@ func TestClientHandler(t *testing.T) {
                    when the client handler is executed,
                    then the number is reported to the reporter`,
 			ctxGenerator: validCtxGenerator,
-			reader:       strings.NewReader("123456789\n"),
+			reader:       ioutil.NopCloser(strings.NewReader("123456789\n")),
 			reporter:     app.NewReporter(&bytes.Buffer{}, &bytes.Buffer{}),
 		},
 		{
@@ -81,7 +82,7 @@ func TestClientHandler(t *testing.T) {
                    when the client handler is executed,
                    then the numbers are reported to the reporter`,
 			ctxGenerator: validCtxGenerator,
-			reader:       strings.NewReader("123456789\n987654321\n"),
+			reader:       ioutil.NopCloser(strings.NewReader("123456789\n987654321\n")),
 			reporter:     app.NewReporter(&bytes.Buffer{}, &bytes.Buffer{}),
 		},
 		{
@@ -89,7 +90,7 @@ func TestClientHandler(t *testing.T) {
                    when the client handler is executed,
                    then the number is reported to the reporter`,
 			ctxGenerator: validCtxGenerator,
-			reader:       strings.NewReader("123456789\nwololo\n"),
+			reader:       ioutil.NopCloser(strings.NewReader("123456789\nwololo\n")),
 			reporter:     app.NewReporter(&bytes.Buffer{}, &bytes.Buffer{}),
 		},
 		{
@@ -97,7 +98,7 @@ func TestClientHandler(t *testing.T) {
                    when the client handler is executed,
                    then nothing is reported by the reporter`,
 			ctxGenerator: validCtxGenerator,
-			reader:       strings.NewReader("123456789\n"),
+			reader:       ioutil.NopCloser(strings.NewReader("123456789\n")),
 			reporter:     app.NewReporter(&failingWriter{}, &bytes.Buffer{}),
 		},
 		{
@@ -105,7 +106,7 @@ func TestClientHandler(t *testing.T) {
                    when the client handler is executed,
                    then the first number is successfully reported`,
 			ctxGenerator: validCtxGenerator,
-			reader:       strings.NewReader("123456789\n987654321\n"),
+			reader:       ioutil.NopCloser(strings.NewReader("123456789\n987654321\n")),
 			reporter:     app.NewReporter(&secondCallFailingWriter{}, &bytes.Buffer{}),
 		},
 		{
@@ -113,7 +114,7 @@ func TestClientHandler(t *testing.T) {
                    when the client handler is executed,
                    then the number is successfully reported and the context is returned`,
 			ctxGenerator:   canceledCtxGenerator,
-			reader:         strings.NewReader("123456789\n"),
+			reader:         ioutil.NopCloser(strings.NewReader("123456789\n")),
 			reporter:       app.NewReporter(&bytes.Buffer{}, &bytes.Buffer{}),
 			expectedCtxErr: context.Canceled,
 		},
