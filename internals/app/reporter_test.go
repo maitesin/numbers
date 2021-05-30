@@ -2,6 +2,7 @@ package app_test
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -142,12 +143,13 @@ func TestCallReportAtEveryTick(t *testing.T) {
 	statsWriter := &bytes.Buffer{}
 	r := app.NewReporter(&bytes.Buffer{}, statsWriter)
 
-	stopChannel := make(chan struct{})
+	ctx, cancel := context.WithCancel(context.Background())
 
-	go app.CallReportAtEveryTick(r, time.NewTicker(1*time.Millisecond), stopChannel)
+	go app.CallReportAtEveryTick(ctx, r, time.NewTicker(1*time.Millisecond))
 
 	time.Sleep(2 * time.Millisecond)
-	stopChannel <- struct{}{}
+	cancel()
+	<-ctx.Done()
 
 	require.NotEmpty(t, statsWriter.String())
 }
