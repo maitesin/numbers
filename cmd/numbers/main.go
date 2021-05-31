@@ -5,20 +5,18 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 	"time"
 
+	"github.com/maitesin/numbers/config"
 	"github.com/maitesin/numbers/internals/app"
 	"github.com/maitesin/numbers/internals/infra"
 )
 
 const (
 	exitStatusFailedOpeningNumbersFile int = iota + 1
+	exitStatusFailedConfiguration
 	exitStatusFailedListen
-)
-
-const (
-	maxNumberOfClients          = 5
-	timeBetweenReportsInSeconds = 10
 )
 
 func main() {
@@ -28,17 +26,23 @@ func main() {
 		os.Exit(exitStatusFailedOpeningNumbersFile)
 	}
 
-	ln, err := net.Listen("tcp", "127.0.0.1:4000")
+	cfg, err := config.New()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(exitStatusFailedConfiguration)
+	}
+
+	ln, err := net.Listen("tcp", strings.Join([]string{cfg.Host, cfg.Port}, ":"))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(exitStatusFailedListen)
 	}
 
 	reporter := app.NewReporter(numbersFile, os.Stdout)
-	clientManager := infra.NewClientManager(maxNumberOfClients, ln)
+	clientManager := infra.NewClientManager(cfg.ConcurrentClients, ln)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	ticker := time.NewTicker(timeBetweenReportsInSeconds * time.Second)
+	ticker := time.NewTicker(time.Duration(cfg.TimeBetweenReportsInSeconds) * time.Second)
 	finish := make(chan struct{})
 
 	go app.CallReportAtEveryTick(reporter, ticker, finish)
