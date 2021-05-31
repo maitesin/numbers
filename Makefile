@@ -14,7 +14,7 @@ lint: generate
 run:
 	cd cmd/numbers && go run main.go
 
-send-numbers-for-30-seconds:
+send-numbers-for-21-seconds:
 	cd cmd/generator && go run main.go | nc localhost 4000 &
 	sleep 21
 	echo "terminate" | nc localhost 4000
