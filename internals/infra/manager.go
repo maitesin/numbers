@@ -34,8 +34,14 @@ func (cm *ClientManager) Start(ctx context.Context, cancel context.CancelFunc, r
 	done := make(chan struct{})
 
 	go func() {
-		<-done
-		cm.sem.Release(1)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-done:
+				cm.sem.Release(1)
+			}
+		}
 	}()
 
 	for {
